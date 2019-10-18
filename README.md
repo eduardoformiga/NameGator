@@ -1,4 +1,10 @@
-# vue-graphql-node
+# NameGator
+https://namegator.netlify.com
+
+Generate names adding some Prefixes + Sufixes . 
+
+## Stack
+Vue.js, GraphQL and Node.js; Others: Bootstrap, Font-Awesome...
 
 ## Project setup
 ```
