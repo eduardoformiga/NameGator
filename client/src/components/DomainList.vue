@@ -6,17 +6,19 @@
           <div class="col-md">
             <AppItemList
               title="Prefixos"
-              :items="prefixes"
-              @addItem="addPrefix"
-              @deleteItem="deletePrefix"
+              :items="items.prefix"
+              type="prefix"
+              @addItem="addItem"
+              @deleteItem="deleteItem"
             ></AppItemList>
           </div>
           <div class="col-md">
             <AppItemList
-              title="Sufixos"
-              :items="sufixes"
-              @addItem="addSufix"
-              @deleteItem="deleteSufix"
+              title="Suffixos"
+              :items="items.suffix"
+              type="suffix"
+              @addItem="addItem"
+              @deleteItem="deleteItem"
             ></AppItemList>
           </div>
         </div>
@@ -67,30 +69,81 @@ export default {
   },
   data() {
     return {
-      prefixes: [],
-      sufixes: []
+      items: {
+        prefix: [],
+        suffix: []
+      }
     }
   },
   methods: {
-    addPrefix(prefix) {
-      this.prefixes.push(prefix)
+    async addItem(item) {
+      const response = await axios({
+        url: 'http://localhost:4000',
+        method: 'post',
+        data: {
+          query: `
+            mutation($item: ItemInput) {
+              newItem: saveItem(item: $item) {
+                id
+                type
+                description
+              }
+            }
+          `,
+          variables: {
+            item
+          }
+        }
+      })
+      const query = response.data
+      const newItem = query.data.newItem
+      this.items[item.type].push(newItem)
     },
-    addSufix(sufix) {
-      this.sufixes.push(sufix)
+    async deleteItem(item) {
+      await axios({
+        url: 'http://localhost:4000',
+        method: 'post',
+        data: {
+          query: `
+            mutation ($id: Int) {
+              deleted: deleteItem(id: $id)
+            }
+          `,
+          variables: {
+            id: item.id
+          }
+        }
+      })
+      this.getItems(item.type)
     },
-    deletePrefix(prefix) {
-      this.prefixes.splice(this.prefixes.indexOf(prefix), 1)
-    },
-    deleteSufix(sufix) {
-      this.sufixes.splice(this.sufixes.indexOf(sufix), 1)
+    async getItems(type) {
+      const { data: query } = await axios({
+        url: 'http://localhost:4000',
+        method: 'post',
+        data: {
+          query: `
+            query ($type: String){
+              items: items(type: $type) {
+                id
+                type
+                description
+              }
+          }
+        `,
+          variables: {
+            type
+          }
+        }
+      })
+      this.items[type] = query.data.items
     }
   },
   computed: {
     domains() {
       const domains = []
-      for (const prefix of this.prefixes) {
-        for (const sufix of this.sufixes) {
-          const name = prefix + sufix
+      for (const prefix of this.items.prefix) {
+        for (const suffix of this.items.suffix) {
+          const name = prefix.description + suffix.description
           const url = name.toLowerCase()
           const checkout = `https://checkout.hostgator.com.br/?a=add&sld=${url}&tld=.com.br`
           domains.push({ name, checkout })
@@ -99,27 +152,9 @@ export default {
       return domains
     }
   },
-  async created() {
-    const { data: query } = await axios({
-      url: 'http://localhost:4000',
-      method: 'post',
-      data: {
-        query: `
-          {
-            prefixes: items(type: "prefix") {
-              id
-              type
-              description
-            }
-            sufixes: items(type: "sufix") {
-              description
-            }
-          }
-        `
-      }
-    })
-    this.prefixes = query.data.prefixes.map(prefix => prefix.description)
-    this.sufixes = query.data.sufixes.map(sufix => sufix.description)
+  created() {
+    this.getItems('prefix')
+    this.getItems('suffix')
   }
 }
 </script>

@@ -10,11 +10,11 @@
           <li
             class="list-group-item"
             v-for="item in items"
-            :key="item"
+            :key="item.id"
             @click="deleteItem(item)"
           >
             <div class="row">
-              <div class="col-md">{{ item }}</div>
+              <div class="col-md">{{ item.description }}</div>
               <div class="col-md text-right">
                 <button class="btn btn-info">
                   <span class="fa fa-trash"></span>
@@ -29,13 +29,13 @@
             type="text"
             class="form-control"
             placeholder="Digite o item"
-            v-model="item"
-            @keyup.enter="addItem(item)"
+            v-model="description"
+            @keyup.enter="addItem(type, description)"
           />
           <div class="input-group-append">
             <button
               class="btn btn-info"
-              @click="addItem(item)"
+              @click="addItem(type, description)"
             >
               <span class="fa fa-plus"></span>
             </button>
@@ -49,19 +49,22 @@
 <script>
 export default {
   name: 'AppItemList',
-  props: ['title', 'items'],
+  props: ['title', 'items', 'type'],
   data() {
     return {
-      item: ''
+      description: ''
     }
   },
   methods: {
-    addItem(item) {
-      this.$emit('addItem', item)
-      this.item = ''
+    addItem(type, description) {
+      this.$emit('addItem', {
+        type,
+        description
+      })
+      this.description = ''
     },
-    deleteItem(item) {
-      this.$emit('deleteItem', item)
+    deleteItem(description) {
+      this.$emit('deleteItem', description)
     }
   }
 }
